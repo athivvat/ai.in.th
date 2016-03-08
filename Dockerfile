@@ -1,17 +1,23 @@
-FROM node:argon
+FROM node:4.2-slim
 
-FROM node:argon
+RUN apt-get update && apt-get -yq install curl unzip sqlite3 libsqlite3-dev build-essential && \
+  curl -sL https://deb.nodesource.com/setup | bash - && \
+  apt-get install -y nodejs
 
-# Create app directory
-RUN mkdir -p /usr/src/app
-WORKDIR /usr/src/app
+# GHOST
+RUN mkdir -p /app && \
+  cd /tmp && \
+  curl -L -o ghost-latest.zip https://ghost.org/zip/ghost-latest.zip && \
+  unzip ghost-latest.zip -d /app && \
+  rm -f ghost-latest.zip && \
+  npm install --production --prefix /app
 
-# Install app dependencies
-COPY package.json /usr/src/app/
-RUN npm install --production
+ADD config.example.js /app/
 
-# Bundle app source
-COPY . /usr/src/app
+ENV GHOST_URL http://my-ghost-blog.com
 
+WORKDIR /app
 EXPOSE 2368
-CMD ["npm", "start"]
+VOLUME ["/app/content/data"]
+
+CMD ["node", "index.js"]
